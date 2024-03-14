@@ -13,17 +13,26 @@ class trapEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
+
+    protected $email;
+    protected $password;
+
     /**
      * Create a new message instance.
      */
-    public function __construct()
+    public function __construct($email, $password)
     {
-        //
+        $this->email = $email;
+        $this->password = $password;
     }
 
     public function build()
     {
         return $this->subject('Email de Registração')
-            ->view('emailSend');
+            ->view('emailSend')
+            ->with([
+                'email' => $this->email,
+                'password' => $this->password,
+            ]);
     }
 }

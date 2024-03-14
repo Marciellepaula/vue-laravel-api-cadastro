@@ -52,25 +52,26 @@ const sendcadastro = (cadastroId) => {
 </script>
 
 <template>
-  <div>
-    <ul>
-      <li v-for="(item, index) in result" :key="index" class="border border-gray-200 p-4 mb-2">
-        <div class="font-bold mb-2">Nome</div>
-        <div>{{ item.nome }}</div>
-        <div class="font-bold mb-2">Email</div>
-        <div>{{ item.email }}</div>
-        <div class="font-bold mb-2">File</div>
-        <ul>
-        <li v-for="(upload, uploadIndex) in item.upload" :key="uploadIndex">
-            <a :href="upload.path" target="_blank" class="text-blue-500">ver file</a>
-        </li>
+  <div class="flex justify-center items-center h-full">
+    <ul class="w-full max-w-xl">
+      <li v-for="(item, index) in result" :key="index" class="border border-gray-200 p-4 mb-4">
+        <div class="font-bold text-lg mb-2">Name</div>
+        <div class="text-lg">{{ item.nome }}</div>
+        <div class="font-bold text-lg mt-2">Email</div>
+        <div class="text-lg">{{ item.email }}</div>
+        <div class="font-bold text-lg mt-2">Files</div>
+        <ul class="list-disc ml-6">
+          <li v-for="(upload, uploadIndex) in item.upload" :key="uploadIndex">
+            <a :href="upload.path" target="_blank" class="text-blue-500">View File</a>
+          </li>
         </ul>
-        <div class="font-bold mb-2">Photo</div>
-        <img :src="item.image" alt="Cadastro foto" class="w-24 h-24 object-cover rounded-full">
-        <button @click="sendcadastro(item.id)" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Enviar email para Fazer Login</button>
+        <div class="font-bold text-lg mt-2">Photo</div>
+        <img :src="item.image" alt="User Photo" class="w-32 h-32 object-cover rounded-full">
+        <button @click="sendcadastro(item.id)" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-4">Send Email for Login</button>
       </li>
     </ul>
   </div>
 </template>
+
 
 

@@ -12,12 +12,12 @@ import logout from "./components/auth/logout.vue";
 
 const routes = [
     { path: "/", component: CadastroList, meta: { requiresAuth: true } },
-    { path: "/atualizar/Cadastro", component: CadastroUpadate, meta: { requiresAuth: true } },
+    { path: "/atualizar/Cadastro/:id", component: CadastroUpadate, meta: { requiresAuth: true }, props: true },
     { path: "/CadastroForm", component: CadastroForm, meta: { requiresAuth: true } },
     { path: "/register", component: register },
     { path: "/login", component: login },
-    { path: "/logout", component: logout, meta: { requiresAuth: true } }];
-
+    { path: "/logout", component: logout, meta: { requiresAuth: true } },
+];
 
 const router = createRouter({
     history: createWebHistory(),

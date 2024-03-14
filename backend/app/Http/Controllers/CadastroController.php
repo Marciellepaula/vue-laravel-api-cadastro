@@ -14,7 +14,10 @@ class CadastroController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * 
      */
+
+
     public function index()
     {
 
@@ -36,6 +39,7 @@ class CadastroController extends Controller
 
     public function store(Request $request)
     {
+
         if (!Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
@@ -59,17 +63,16 @@ class CadastroController extends Controller
             ]);
 
             $randomBytes = random_bytes(8);
-            $password = bin2hex($randomBytes);
+            $password = $randomBytes;
 
             User::create([
-                'name' => $cadastro->name,
+                'name' => $cadastro->nome,
                 'email' => $cadastro->email,
-                'password' => Hash::make($password),
+                'password' => $password
             ]);
 
             if ($request->hasFile('path')) {
                 $files = $request->file('path');
-                $files = array($files);
                 foreach ($files as $file) {
                     $filePath = $file->store('path', 'public');
                     Upload::create([
@@ -78,6 +81,7 @@ class CadastroController extends Controller
                     ]);
                 }
             }
+
             return response()->json(['message' => 'sucess register'], 200);
         }
         return response()->json(['message' => 'Failed to register'], 400);

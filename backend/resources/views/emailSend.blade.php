@@ -13,6 +13,9 @@
     <p>Dear</p>
 
     <p>Please make your registration in the link: http://localhost:5173/login</p>
+    <p>email: </p>{{ $email }}
+    <p>senha: </p>{{ $password }}
+    <p>Mude a senha ao entrar no sistema</p>
 
     <p>Thank you for using our application.</p>
 

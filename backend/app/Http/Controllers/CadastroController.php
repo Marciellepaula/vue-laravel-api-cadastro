@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class CadastroController extends Controller
 {
@@ -95,10 +96,8 @@ class CadastroController extends Controller
         if (!Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        $cadastro = CadastroPessoa::find($id);
+        $cadastro = CadastroPessoa::with('upload')->find($id);
 
-        $cadastro->photo = $cadastro->photo ? url("storage/{$cadastro->photo}") : null;
-        $cadastro->upload = $cadastro->upload ? url("storage/{$cadastro->upload}") : null;
         if (!$cadastro) {
             return response()->json(['error' => 'Cadastro not found'], 404);
         }
@@ -111,14 +110,56 @@ class CadastroController extends Controller
      */
     public function update(Request $request, string $id)
     {
-
-        $cadastro = CadastroPessoa::find($id);  // procurar pelo id
+        $cadastro = CadastroPessoa::with('upload')->find($id);
 
         if (!$cadastro) {
             return response()->json(['message' => 'person not found'], 404);
         }
 
-        $cadastro->update($request->all());
+        // Eliminar o arquivo existente, se houver
+        if ($cadastro->photo) {
+            Storage::delete($cadastro->photo);
+        }
+
+        foreach ($cadastro->upload as $upload) {
+            Storage::delete($upload->path);
+            $upload->delete();
+        }
+        if ($request->has('photo')) {
+            // Decode the base64 encoded image data
+            $imageData = $request->input('photo');
+            $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $imageData));
+
+            // Generate a unique filename
+            $filename = 'photo_' . time() . '.jpg'; // You may want to adjust the filename as needed
+
+            // Store the decoded image data
+            Storage::disk('public')->put('photos/' . $filename, $decodedImage);
+
+            // Update the 'photo' field in the database with the path to the stored image
+            $cadastro->photo = 'photos/' . $filename;
+        }
+
+        if ($request->has('uploads')) {
+            foreach ($request->input('uploads') as $file) {
+                $filePath = $file->store('path');
+                $decodedPdf = base64_decode(preg_replace('#^data:application/pdf;base64,#', '', $file));
+                $filename = 'file_' . time() . '.pdf';
+                Storage::disk('public')->put('path/' . $filename, $decodedPdf);
+
+                $upload = new Upload();
+                $upload->path = $filePath;
+
+                // Assuming $cadastro is an instance of another model with a relationship named 'upload'
+                $cadastro->upload()->save($upload); // save the upload relationship
+            }
+        }
+
+        // Salvar as alterações no modelo
+        $cadastro->save();
+        $cadastro->update($request->only('nome', 'email', 'cpf'));
+
+        return response()->json(['message' => 'Person updated', $request->all()], 200);
     }
 
     /**

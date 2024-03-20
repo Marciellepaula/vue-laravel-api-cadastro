@@ -1,59 +1,85 @@
 <template>
-    <div>
-      <h1>Edit Course</h1>
-      <form @submit.prevent="updatecadastro" class="mt-3" enctype="multipart/form-data">
-        <div class="mb-3">
-          <label for="name" class="form-label">Name:</label>
-          <input v-model="cadastro.nome" class="form-control" required />
-        </div>
-        <div class="mb-3">
-          <label for="name" class="form-label">Email:</label>
-          <input v-model="cadastro.email" class="form-control" required />
-        </div>
-        <div class="mb-3">
-          <label for="name" class="form-label">Cpf:</label>
-          <input v-model="cadastro.cpf" class="form-control" required />
-        </div>
-        <div class="mb-3">
-          <label for="photo" class="form-label">Photo:</label>
-          <input type="file" name="photo" :class="{ 'is-invalid': cadastro.errors.has('photo') }" class="form-control"
-            @change="handleImageChange" />
-          <has-error :cadastro="cadastro" field="image" />
-          <img :key="cadastro.id" :src="cadastro.photo" style="width: 200px; height: 200px; object-fit: cover"
-            class="img-thumbnail" />
-        </div>
-        <div class="mb-3">
-          <label for="photo" class="form-label">File:</label>
-          <input type="file" name="photo" :class="{ 'is-invalid': cadastro.errors.has('path') }" class="form-control"
-            @change="handleFileChange" />
-          <has-error :cadastro="cadastro" field="image" />
-          <a :key="cadastro.id" :src="cadastro.path" style="width: 200px; height: 200px; object-fit: cover"
-            class="img-thumbnail" />
-        </div>
-        <button type="submit" class="btn btn-success">Update</button>
-      </form>
+  <div>
+    <div class="flex justify-center items-center h-full">
+      <div class="max-w-xl p-6 bg-white border rounded-lg">
+        <h1>Edit</h1>
+        
+        <form @submit.prevent="updatecadastro" class="mt-3" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="name" class="form-label">Name:</label>
+            <input v-model="cadastro.nome" required class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6" placeholder="janesmith">
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email:</label>
+            <input v-model="cadastro.email" required class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6" placeholder="janesmith@example.com">
+          </div>
+          <div class="mb-3">
+            <label for="cpf" class="form-label">CPF:</label>
+            <input v-model="cadastro.cpf" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label for="photo" class="form-label">Photo:</label>
+            <input type="file" name="photo" @change="handleImageChange" class="appearance-none border border-gray-300 rounded-lg p-2 focus:outline-none focus:border-blue-500">
+            <img v-if="cadastro.photo" :src="cadastro.photo" class="h-40 w-40 rounded-md" />
+          </div>
+          <label class="form-label">File:</label><br>
+          <div class="mb-3" v-for="(upload, index) in uploads" :key="index">
+            <input type="file" :name="'file-' + index" @change="handleFileChange($event, index)" />
+            <a v-if="upload.filepath" :href="upload.filepath" target="_blank" class="text-blue-500 hover:none">
+              <i class="far fa-file-pdf fa-3x"></i>
+            </a>
+          </div>
+          <button type="submit" class="btn btn-success">Update</button>
+        </form>
+      </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, defineProps } from "vue";
+  </div>
+</template>
+
+<script setup>
+  import { ref, defineProps, defineExpose, onMounted } from "vue";
   import axios from "redaxios";
   import { useRouter } from "vue-router";
+
   const router = useRouter();
   const props = defineProps(["id"]);
-  
   const cadastro = ref({
+    id: "",
     nome: "",
     email: "",
     errors: new Map(), 
     cpf: "",
-    photo: null,
+    image: null,
   });
+  const uploads = ref([]);
 
-  const upload = ref({
-    path: [],
-  });
-  
+  const fetchcadastro = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("Token not found in localStorage");
+      return router.push("/login");
+    }
+    try {
+      const response = await axios.get(`http://localhost/api/cadastro/${props.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+          "Accept": "application/json"
+        }
+      });
+      const data = response.data.data; 
+      cadastro.value.id = data.id; 
+      cadastro.value.nome = data.nome;
+      cadastro.value.cpf = data.cpf; 
+      cadastro.value.photo = data.image;
+      cadastro.value.email = data.email;
+      uploads.value = data.upload;
+    } catch (error) {
+      console.error("Error fetching cadastro:", error);
+      alert("Failed to fetch cadastro data. Please try again.");
+    }
+  };
+
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -65,59 +91,51 @@
     }
   };
 
-  const handleFileChange = (event) => {
-    upload.value.path = Array.from(event.target.files);
+  const handleFileChange = (event, index) => {
+    const file = event.target.files[0];
+    if (file) {
+      uploads.value[index].file = file;
+      uploads.value[index].filepath = URL.createObjectURL(file);
+    }
   };
 
   const updatecadastro = () => {
-    const formData = new FormData();
-    formData.append("name", cadastro.value.name);
-    formData.append("photo", cadastro.value.photo);
-    formData.append("name", cadastro.value.name);
-    formData.append("photo", cadastro.value.photo);
+    const token = localStorage.getItem("token");
+    if (!token) {
+        console.error("Token not found in localStorage");
+        return router.push("/login");
+    }
+   
+    const data = {
+        nome: cadastro.value.nome,
+        email: cadastro.value.email,
+        cpf: cadastro.value.cpf,
+        photo: cadastro.value.photo,
+        uploads: uploads.value.map(upload => ({ path: upload.filepath }))
+    };
 
-    if (upload.value.path.length > 0) {
-    upload.value.path.forEach((file) => {
-      formData.append("path[]", file);
-    });
-  }
+ 
     const editUrl = `http://localhost/api/cadastro/${props.id}`;
-    axios
-      .put(editUrl, formData, {
+    axios.put(editUrl, data, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`, // Include the token in the Authorization header
-          "Content-Type": "multipart/form-data", // Ensure proper content type for FormData
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data", // Set Content-Type to application/json
         },
-      })
-      .then((response) => {
-        alert(" updated successfully!");
-      })
-      .catch((error) => {
+        body: JSON.stringify(data),
+    })
+    .then((response) => {
+        alert("Updated successfully!");
+    })
+    .catch((error) => {
         console.error("Error updating cadastro:", error);
         alert("Failed to update cadastro. Please try again.");
-      });
-  };
-  
-  const fetchCourse = async () => {
-    try {
-      const response = await axios.get(`http://localhost/api/cadastro/${props.id}`);
-      const data = response.data.data; 
-  
-    course.value.id = data.id; 
-    course.value.name = data.name; 
-    course.value.photo = data.photo;
-    course.value.cpf = data.name; 
-    course.value.email = data.photo;
-    course.value.email = data.photo;
-    } catch (error) {
-      console.error("Error fetching course:", error);
-      alert("Failed to fetch course data. Please try again.");
-    }
-  };
-  
-  fetchCourse();
-  
-  // Expose reactive variables to the template
+    });
+};
+
+
+  onMounted(() => {
+    fetchcadastro();
+  });
+
   defineExpose({ cadastro, handleImageChange });
-  </script>
-  
+</script>

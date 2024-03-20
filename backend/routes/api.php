@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(
     function () {
         Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
         Route::apiResource('cadastro', CadastroController::class);
+        Route::post('cadastro/{id}', [CadastroController::class, 'update']);
     }
 );
 

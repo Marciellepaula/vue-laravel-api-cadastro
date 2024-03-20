@@ -3,6 +3,9 @@
   import axios from "redaxios";
   import { useRouter } from "vue-router";
 
+  import Header from "../components/header.vue";
+  import Footer from "../components/footer.vue";
+
   const router = useRouter();
   const cadastro = ref({
     id: "",
@@ -64,6 +67,7 @@
 </script>
 
 <template>
+  <Header/>
   <div class="max-w-md mx-auto">
     <h1 class="text-3xl font-bold mb-4">Cadastro de Pessoas</h1>
     <form @submit.prevent="saveData" enctype="multipart/form-data">
@@ -94,4 +98,5 @@
       </button>
     </form>
   </div>
+  <Footer/>
 </template>
